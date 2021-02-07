@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HTML Content Editable</title>
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+        <div class="toolbar">
+            <ul class="actions">
+                <li>
+                    <button id="table" class="action-item">table</button>
+                </li>
+
+                <li>
+                    <button id="row_below" class="action-item">row below</button>
+                </li>
+
+                <li>
+                    <button id="row_above" class="action-item">row above</button>
+                </li>
+
+                <li>
+                    <button id="column_left" class="action-item">column left</button>
+                </li>
+
+                <li>
+                    <button id="column_right" class="action-item">column right</button>
+                </li>
+
+                <li>
+                    <button id="remove_row" class="action-item">remove row</button>
+                </li>
+
+                <li>
+                    <button id="remove_column" class="action-item">remove column</button>
+                </li>
+
+                <li style="margin-left: 20px;">
+                    <button id="list" class="action-item">list</button>
+                </li>
+
+                <li>
+                    <button id="link" class="action-item">hyperlink</button>
+                </li>
+
+                <li>
+                    <button id="background" class="action-item">backColor</button>
+                </li>
+
+                <li>
+                    <button id="strike" class="action-item">strikethrough</button>
+                </li>
+
+                <li>
+                    <button id="image" class="action-item">image</button>
+                </li>
+
+                <li>
+                    <button id="bold" class="action-item">bold</button>
+                </li>
+
+                <li>
+                    <button id="italic" class="action-item">italic</button>
+                </li>
+
+                <li>
+                    <button id="underline" class="action-item">underline</button>
+                </li>
+
+                <li>
+                    <button id="select_all" class="action-item">select all</button>
+                </li>
+            </ul>
+            <button id="btn_get_data" class="btn">Show Preview</button>
+        </div>
+
+        <div class="main">
+            <div style="width: 70%; margin: 0 auto;">
+                <h1>Editable Text Area</h1>
+                <div class="editable-content" style="width: 70%;" id="editable_content" contenteditable>
+                    Editable Text (bold, italic, underline, enter work here)</td>
+                </div>
+            </div>
+            
+            <h2>Preview</h2>
+            
+            <div class="editable-content" style="margin-bottom: 10px;">
+                <div id="content">preview goes here...</div>
+            </div>
+        
+            <div id="html_view" class="editable-content">
+                html goes here...
+            </div>
+        </div>
+
+        <script src="./script.js"></script>
+    </body>
+</html>
