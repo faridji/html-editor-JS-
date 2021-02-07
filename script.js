@@ -145,8 +145,7 @@ function addRow(pos) {
 }
 
 function addColumn(pos) {
-
-    colIndex += pos == 'left' ? -1 : +1;
+    if (pos == 'right') this.colIndex += 1;
 
     if (colIndex < 0) colIndex = 0;
 
