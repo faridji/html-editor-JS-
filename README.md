@@ -1,4 +1,4 @@
-# html-editor-JS
+# HTML Build (JS)
 This is an html editor build using html content editable property. 
 
 ## Options
