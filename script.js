@@ -107,7 +107,7 @@ function listenToDOMEvents() {
 }
 
 function getTableHTML() {
-    const colWidth = Math.round(100/numOfCols);
+    const colWidth = (100/numOfCols).toFixed(2);
 
     let table = '<table id="dynamic_table">'
     let thead = '<thead>';
@@ -168,20 +168,41 @@ function addColumn(pos) {
 
     if (colIndex < 0) colIndex = 0;
 
-    var tblHeadObj = document.getElementById(tblId).tHead;
+    const table = document.getElementById('dynamic_table');
 
-    for (var h=0; h<tblHeadObj.rows.length; h++) {
-        document.createElement('th');
-        tblHeadObj.rows[h].insertCell(colIndex);
-    }
+    if (table) {
+        var tblHeadObj = table.tHead;
 
-    var tblBodyObj = document.getElementById(tblId).tBodies[0];
-    for (var i=0; i<tblBodyObj.rows.length; i++) {
-       const cell = tblBodyObj.rows[i].insertCell(colIndex);
-
-       cell.onclick = () => {
-        colIndex = cell.cellIndex;
-       }
+        for (var h=0; h<tblHeadObj.rows.length; h++) {
+            document.createElement('th').set;
+            tblHeadObj.rows[h].insertCell(colIndex);
+        }
+    
+        var tblBodyObj = document.getElementById(tblId).tBodies[0];
+        for (var i=0; i<tblBodyObj.rows.length; i++) {
+           const cell = tblBodyObj.rows[i].insertCell(colIndex);
+           cell
+    
+           cell.onclick = () => {
+            colIndex = cell.cellIndex;
+           }
+        }
+    
+        numOfCols = parseInt(numOfCols) + 1;
+        const colWidth = (100 / numOfCols).toFixed(2);
+    
+        const rowInds = Object.keys(table.rows);
+    
+        setTimeout(() => {
+            for (const rIdx of rowInds) {
+                const row = table.rows[+rIdx];
+                const cellIdx = Object.keys(row.cells);
+                for (const cIdx of cellIdx) {
+                    const col = row.cells[+cIdx];
+                    col.style.width = colWidth + '%';
+                }
+            }
+        }, 0);
     }
 }
 
