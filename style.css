@@ -70,3 +70,9 @@ table, td, th {
     border: 1px solid gray;
     padding: 10px;
 }
+
+.box {
+    background-color: orangered;
+    padding: 40px;
+    margin-right: 10px;
+}

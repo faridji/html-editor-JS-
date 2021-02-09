@@ -7,7 +7,26 @@ var tblId = 'dynamic_table';
 listenToDOMEvents();
 
 function listenToDOMEvents() {
-    document.getElementById('btn_get_data').addEventListener('click', () => {
+    document.getElementById('editable_content').addEventListener('paste', (ev) => {
+        setTimeout(() => {
+            const targetHTML = document.getElementById('editable_content').innerHTML;
+
+            let newHTML = null;
+
+            if (targetHTML.includes('<div> </div>'))
+            {
+                newHTML = targetHTML.replaceAll("<div> </div>", '<br>');
+            }
+            else if (targetHTML.includes('<div></div>'))
+            {
+                newHTML = targetHTML.replaceAll("<div></div>", '<br>');
+            }
+
+            if (newHTML) document.getElementById('editable_content').innerHTML = newHTML;
+        }, 100);
+    });
+
+    document.getElementById('btn_preview').addEventListener('click', () => {
         const content = document.getElementById('editable_content').innerHTML;
         document.getElementById('content').innerHTML = content;
         document.getElementById('html_view').innerText = content;
