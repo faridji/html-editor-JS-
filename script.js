@@ -7,19 +7,18 @@ var tblId = 'dynamic_table';
 listenToDOMEvents();
 
 function listenToDOMEvents() {
-    document.getElementById('editable_content').addEventListener('paste', (ev) => {
+    document.getElementById('editable_content').addEventListener('paste', (e) => {
         setTimeout(() => {
             const targetHTML = document.getElementById('editable_content').innerHTML;
-
             let newHTML = null;
 
             if (targetHTML.includes('<div> </div>'))
             {
-                newHTML = targetHTML.replaceAll("<div> </div>", '<br>');
+                newHTML = targetHTML.replaceAll('<div> </div>', '<br>');
             }
-            else if (targetHTML.includes('<div></div>'))
+            if (targetHTML.includes('<div></div>'))
             {
-                newHTML = targetHTML.replaceAll("<div></div>", '<br>');
+                newHTML = targetHTML.replaceAll('<div> </div>', '<br>');
             }
 
             if (newHTML) document.getElementById('editable_content').innerHTML = newHTML;
@@ -33,7 +32,7 @@ function listenToDOMEvents() {
     });
 
     document.getElementById('table').addEventListener('click', () => {
-        const dimensions = prompt('rows/cols', '');
+        const dimensions = prompt('rows/cols', '2/3');
         if (dimensions && dimensions != '') {
             [numOfRows, numOfCols] = dimensions.split('/');
             addHTMLAtCaretPos('table');
@@ -116,7 +115,7 @@ function getTableHTML() {
     let theadRow = '<tr onclick="getRowIndex(this)">';
 
     for (let c=0; c<numOfCols; c++) {
-        theadRow += `<th style="width: ${colWidth}%;">Heading ${c+1}</th>`;
+        theadRow += `<th  onclick="getColIndex(this)" style="width: ${colWidth}%;">Heading ${c+1}</th>`;
     }
 
     theadRow += '</tr>';
@@ -126,7 +125,14 @@ function getTableHTML() {
         let tr = '<tr onclick="getRowIndex(this)">';
 
         for (let c=0; c<numOfCols; c++) {
-            tr += `<td style="width: ${colWidth}%;" onclick="getColIndex(this)">Cell ${c+1}</td>`;
+            // tr += `<td style="width: ${colWidth}%;"
+            //         onclick="getColIndex(this)" contenteditable>Cell ${c+1}
+            //     </td>`;
+
+            tr += `<td style="width: ${colWidth}%;"
+                    onclick="getColIndex(this)">
+                    <input type="text" value="Cell ${c+1}"/>
+                </td>`;
         }
 
         tr += '</tr>';
@@ -150,15 +156,17 @@ function addRow(pos) {
         const row = table.insertRow(rowIndex);
 
         for (let i=0; i<colsToAdd; i++) {
-            cell = row.insertCell(i);
-
+            let cell = row.insertCell(i);
+            addInputToCell(cell);
             cell.onclick = () => {
                 colIndex = cell.cellIndex;
+                console.log('Cell Index =', colIndex);
             }
         }
 
         row.onclick = () => {
             rowIndex = row.rowIndex;
+            console.log('Row Index =', rowIndex);
         };
     }
 }
@@ -181,8 +189,7 @@ function addColumn(pos) {
         var tblBodyObj = document.getElementById(tblId).tBodies[0];
         for (var i=0; i<tblBodyObj.rows.length; i++) {
            const cell = tblBodyObj.rows[i].insertCell(colIndex);
-           cell
-    
+           addInputToCell(cell);
            cell.onclick = () => {
             colIndex = cell.cellIndex;
            }
@@ -204,6 +211,12 @@ function addColumn(pos) {
             }
         }, 0);
     }
+}
+
+function addInputToCell(cell) {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'text');
+    cell.appendChild(input);
 }
 
 function onRemove(type) {
@@ -272,4 +285,8 @@ function getRowIndex(row) {
 function getColIndex(col) {
     colIndex = col.cellIndex;
     console.log('Column Index =', colIndex);
+}
+
+function onCellFocus() {
+    console.log('On Cell Focus =');
 }
