@@ -3,11 +3,11 @@ var colIndex = 0;
 var numOfCols = 0;
 var numOfRows = 0;
 var tblId = 'dynamic_table';
-
+var containerId = 'editable_content';
 listenToDOMEvents();
 
 function listenToDOMEvents() {
-    document.getElementById('editable_content').addEventListener('paste', (e) => {
+    document.getElementById(containerId).addEventListener('paste', (e) => {
         setTimeout(() => {
             const targetHTML = document.getElementById('editable_content').innerHTML;
             let newHTML = null;
@@ -21,7 +21,7 @@ function listenToDOMEvents() {
                 newHTML = targetHTML.replaceAll('<div> </div>', '<br>');
             }
 
-            if (newHTML) document.getElementById('editable_content').innerHTML = newHTML;
+            if (newHTML)  document.getElementById('editable_content').innerHTML = newHTML;
         }, 100);
     });
 
@@ -31,11 +31,16 @@ function listenToDOMEvents() {
         document.getElementById('html_view').innerText = content;
     });
 
+    document.getElementById(containerId).addEventListener('click', (ev) => {
+        makeContentEditable(containerId);
+    });
+
     document.getElementById('table').addEventListener('click', () => {
         const dimensions = prompt('rows/cols', '2/3');
         if (dimensions && dimensions != '') {
             [numOfRows, numOfCols] = dimensions.split('/');
             addHTMLAtCaretPos('table');
+            removeContentEditable(containerId);
         }
     });
 
@@ -61,6 +66,12 @@ function listenToDOMEvents() {
 
     document.getElementById('remove_column').addEventListener('click', () => {
         onRemove('column');
+    });
+
+    document.getElementById('merge_cells').addEventListener('click', () => {
+        makeContentEditable(containerId)
+        mergeCells();
+        removeContentEditable(containerId);
     });
 
     document.getElementById('list').addEventListener('click', () => {
@@ -105,7 +116,80 @@ function listenToDOMEvents() {
     });
 }
 
+function makeContentEditable(el) {
+    document.getElementById(el).setAttribute('contenteditable', 'true');
+}
+
+function removeContentEditable(el) {
+    document.getElementById(el).removeAttribute('contenteditable');
+}
+
 function getTableHTML() {
+    const colWidth = (100/numOfCols).toFixed(2);
+
+    let table = document.createElement('table');
+    table.setAttribute('id', 'dynamic_table');
+    
+    let thead = document.createElement('thead');
+    let tbody = document.createElement('tbody');
+
+    let theadRow = document.createElement('tr');
+    theadRow.addEventListener('click', () => {
+        getRowIndex(theadRow)
+    });
+
+    for (let c=0; c<numOfCols; c++) {
+        let th = document.createElement('th');
+        th.setAttribute('contenteditable', 'true');
+        th.style.width = colWidth + '%';
+        th.innerHTML = `Heading ${c+1}`;
+
+        th.addEventListener('click', () => {
+            getCellIndex(th);
+        });
+        th.addEventListener('click', () => {
+            onCellFocus(th);
+        });
+        mouseMoveWhileDown(th, onSelectionChange);
+
+        theadRow.appendChild(th);
+    }
+
+    thead.appendChild(theadRow);
+
+    for (let r=1; r<numOfRows; r++) {
+        let tr = document.createElement('tr');
+        tr.addEventListener('click', () => {
+            getRowIndex(tr);
+        });
+
+        for (let c=0; c<numOfCols; c++) {
+            let td = document.createElement('td');
+            td.style.width = colWidth + '%';
+            td.setAttribute('contenteditable', 'true');
+            td.innerHTML = `Cell ${c+1}`;
+
+            td.addEventListener('click', () => {
+                getCellIndex(td);
+            });
+            td.addEventListener('focus', () => {
+                onCellFocus(td);
+            });
+            mouseMoveWhileDown(td, onSelectionChange);
+
+            tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+    }
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+   
+    return table;
+}
+
+function getTableHTML2() {
     const colWidth = (100/numOfCols).toFixed(2);
 
     let table = '<table id="dynamic_table">'
@@ -115,7 +199,7 @@ function getTableHTML() {
     let theadRow = '<tr onclick="getRowIndex(this)">';
 
     for (let c=0; c<numOfCols; c++) {
-        theadRow += `<th  onclick="getColIndex(this)" style="width: ${colWidth}%;">Heading ${c+1}</th>`;
+        theadRow += `<th  onclick="getCellIndex(this)" onfocus="onCellFocus(this)" contenteditable style="width: ${colWidth}%;">Heading ${c+1}</th>`;
     }
 
     theadRow += '</tr>';
@@ -125,14 +209,26 @@ function getTableHTML() {
         let tr = '<tr onclick="getRowIndex(this)">';
 
         for (let c=0; c<numOfCols; c++) {
-            // tr += `<td style="width: ${colWidth}%;"
-            //         onclick="getColIndex(this)" contenteditable>Cell ${c+1}
+
+            // tr += `<td style="width: ${colWidth}%;" contenteditable
+            //         onclick="getCellIndex(this)" 
+            //         onfocus="onCellFocus(this)">Cell ${c+1}
             //     </td>`;
 
-            tr += `<td style="width: ${colWidth}%;"
-                    onclick="getColIndex(this)">
-                    <input type="text" value="Cell ${c+1}"/>
+
+            tr += `<td style="width: ${colWidth}%;" contenteditable
+                    onclick="getCellIndex(this)" 
+                    onfocus="onCellFocus(this)"
+                    onselectstart="onSelect(this)"
+                    onselectionchange="onSelection(this)"
+                    onmouseup="onMouseUp(this)">Cell ${c+1}
                 </td>`;
+
+
+            // tr += `<td style="width: ${colWidth}%;"
+            //         onclick="getCellIndex(this)">
+            //         <input type="text" onselect="onInputChange()" value="Cell ${c+1}"/>
+            //     </td>`;
         }
 
         tr += '</tr>';
@@ -236,6 +332,36 @@ function onRemove(type) {
     }
 }
 
+function mergeCells() {
+    
+    let selection = window.getSelection().getRangeAt(0);
+    let startingElementIdx = 0;
+    console.log('Selection =', selection);
+
+    const startingElement = selection.startContainer.parentElement;
+    startingElementIdx = startingElement.cellIndex;
+    const row = selection.startContainer.parentElement.parentElement;
+    const endingElementIdx = selection.endContainer.parentElement.cellIndex;
+    
+
+    const cells = row.cells;
+
+    if (cells) {
+        for (let cell of cells) {
+            if (cell.cellIndex <= startingElementIdx) continue;
+            if (cell.cellIndex > endingElementIdx) continue;
+    
+            console.log('Cell To Delete =', cell.innerHTML);
+    
+            setTimeout(() => {
+                row.removeChild(cell);
+            }, 100);
+        }
+    
+        startingElement.colSpan =endingElementIdx - startingElementIdx + 1;
+    }
+}
+
 function addHTMLAtCaretPos(type) {
     var sel, range;
     if (window.getSelection) 
@@ -252,7 +378,7 @@ function addHTMLAtCaretPos(type) {
             
             if (type == 'table') {
                 var el = document.createElement("div");
-                el.innerHTML = getTableHTML();
+                el.appendChild(getTableHTML());
             }
             
             var frag = document.createDocumentFragment(), node, lastNode;
@@ -280,13 +406,69 @@ function addHTMLAtCaretPos(type) {
 function getRowIndex(row) {
     rowIndex = row.rowIndex;
     console.log('Row Index =', rowIndex);
+
+    removeContentEditable(containerId);
+    mEvent = event;
+    event.stopPropagation();
 }
 
-function getColIndex(col) {
+function getCellIndex(col) {
     colIndex = col.cellIndex;
-    console.log('Column Index =', colIndex);
+    // console.log('Column Index =', colIndex);
 }
 
-function onCellFocus() {
-    console.log('On Cell Focus =');
+function onCellFocus(cell) {
+    setTimeout(() => {
+        document.execCommand('selectAll', false, null);
+    }, 10);
+}
+
+
+function onSelectionChange() {
+    console.log('Selection changed...');
+
+    window.getSelection().rage
+    if (document.getElementById(containerId).getAttribute('contenteditable') == null) {
+        makeContentEditable(containerId);
+    }
+}
+
+function mouseMoveWhileDown(target, whileMove) {
+    var endMove = function () {
+        window.removeEventListener('mousemove', whileMove);
+        window.removeEventListener('mouseup', endMove);
+
+        let selection = window.getSelection().getRangeAt(0);
+        if (selection.startOffset === selection.endOffset) {
+            return;
+        }
+        removeContentEditable(containerId);
+    };
+
+    target.addEventListener('mousedown', function (event) {
+        console.log('Event =', event);
+        window.addEventListener('mousemove', whileMove);
+        window.addEventListener('mouseup', endMove);   
+    });
+}
+
+
+function onSelect(cell) {
+    console.log('selection started......', window.getSelection().getRangeAt(0));
+    makeContentEditable(containerId)
+}
+
+function onMouseUp(cell) {
+    let selection = window.getSelection().getRangeAt(0);
+    if (selection.startOffset === selection.endOffset) return;
+    removeContentEditable(containerId);
+}
+
+function onSelection(cell) {
+    console.log('selection changed.');
+    removeContentEditable(containerId);
+}
+
+function onInputChange() {
+    console.log('Input selection changed...')
 }

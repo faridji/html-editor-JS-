@@ -18,6 +18,7 @@
     margin: 5px; 
     display: flex; 
     justify-content: space-between;
+    align-items: flex-start;
 }
 
 .table
@@ -34,11 +35,17 @@
     font-size: 16px;
     border-radius: 4px;
     cursor: pointer;
+    width: 150px;
+    height: 40px;
 }
 
 .actions {
-    list-style-type: none;
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    margin: 0;
+    list-style-type: none;
 }
 
 .action-item {
@@ -49,6 +56,7 @@
     border: none;
     color: #fff;
     cursor: pointer;
+    margin-bottom: 5px;
 }
 
 table 
