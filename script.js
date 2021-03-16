@@ -6,6 +6,11 @@ var tblId = 'dynamic_table';
 var containerId = 'editable_content';
 listenToDOMEvents();
 
+function makeTable() {
+    [numOfRows, numOfCols] = [6,4];
+    addHTMLAtCaretPos('table');
+}
+
 function listenToDOMEvents() {
     document.getElementById(containerId).addEventListener('paste', (e) => {
         setTimeout(() => {
@@ -32,7 +37,7 @@ function listenToDOMEvents() {
     });
 
     document.getElementById(containerId).addEventListener('click', (ev) => {
-        makeContentEditable(containerId);
+        makeContentEditable(containerId, 'Main Container Clicked.');
     });
 
     document.getElementById('table').addEventListener('click', () => {
@@ -69,9 +74,9 @@ function listenToDOMEvents() {
     });
 
     document.getElementById('merge_cells').addEventListener('click', () => {
-        makeContentEditable(containerId)
+        makeContentEditable(containerId, 'Merge Cells')
         mergeCells();
-        removeContentEditable(containerId);
+        removeContentEditable(containerId, 'Merge Cells');
     });
 
     document.getElementById('list').addEventListener('click', () => {
@@ -116,11 +121,11 @@ function listenToDOMEvents() {
     });
 }
 
-function makeContentEditable(el) {
+function makeContentEditable(el, from) {
     document.getElementById(el).setAttribute('contenteditable', 'true');
 }
 
-function removeContentEditable(el) {
+function removeContentEditable(el, from) {
     document.getElementById(el).removeAttribute('contenteditable');
 }
 
@@ -147,9 +152,11 @@ function getTableHTML() {
         th.addEventListener('click', () => {
             getCellIndex(th);
         });
-        th.addEventListener('click', () => {
+
+        th.addEventListener('focus', () => {
             onCellFocus(th);
         });
+
         mouseMoveWhileDown(th, onSelectionChange);
 
         theadRow.appendChild(th);
@@ -172,9 +179,11 @@ function getTableHTML() {
             td.addEventListener('click', () => {
                 getCellIndex(td);
             });
+
             td.addEventListener('focus', () => {
                 onCellFocus(td);
             });
+
             mouseMoveWhileDown(td, onSelectionChange);
 
             tr.appendChild(td);
@@ -253,7 +262,7 @@ function addRow(pos) {
 
         for (let i=0; i<colsToAdd; i++) {
             let cell = row.insertCell(i);
-            addInputToCell(cell);
+            cell.innerHTML = `Cell ${i+1}`;
             cell.onclick = () => {
                 colIndex = cell.cellIndex;
                 console.log('Cell Index =', colIndex);
@@ -336,13 +345,12 @@ function mergeCells() {
     
     let selection = window.getSelection().getRangeAt(0);
     let startingElementIdx = 0;
-    console.log('Selection =', selection);
 
     const startingElement = selection.startContainer.parentElement;
     startingElementIdx = startingElement.cellIndex;
     const row = selection.startContainer.parentElement.parentElement;
-    const endingElementIdx = selection.endContainer.parentElement.cellIndex;
-    
+    const endingElementIdx = startingElementIdx + 1;
+    const endingElement = row.cells[endingElementIdx];
 
     const cells = row.cells;
 
@@ -350,15 +358,23 @@ function mergeCells() {
         for (let cell of cells) {
             if (cell.cellIndex <= startingElementIdx) continue;
             if (cell.cellIndex > endingElementIdx) continue;
-    
-            console.log('Cell To Delete =', cell.innerHTML);
-    
+        
             setTimeout(() => {
                 row.removeChild(cell);
             }, 100);
         }
     
-        startingElement.colSpan =endingElementIdx - startingElementIdx + 1;
+        if (startingElement.getAttribute('colSpan')) 
+        {
+            if (endingElement.getAttribute('colSpan')) {
+                startingElement.colSpan += endingElement.colSpan;
+            } else {
+                startingElement.colSpan += 1;
+            }
+        }
+        else {
+            startingElement.colSpan = endingElementIdx - startingElementIdx + 1;
+        }
     }
 }
 
@@ -404,17 +420,14 @@ function addHTMLAtCaretPos(type) {
 }
 
 function getRowIndex(row) {
+    console.log('row clicked.')
     rowIndex = row.rowIndex;
-    console.log('Row Index =', rowIndex);
-
-    removeContentEditable(containerId);
-    mEvent = event;
+    removeContentEditable(containerId, 'Row Clicked');
     event.stopPropagation();
 }
 
 function getCellIndex(col) {
     colIndex = col.cellIndex;
-    // console.log('Column Index =', colIndex);
 }
 
 function onCellFocus(cell) {
@@ -423,13 +436,10 @@ function onCellFocus(cell) {
     }, 10);
 }
 
-
 function onSelectionChange() {
-    console.log('Selection changed...');
-
-    window.getSelection().rage
+    console.log('Selection Changed');
     if (document.getElementById(containerId).getAttribute('contenteditable') == null) {
-        makeContentEditable(containerId);
+        makeContentEditable(containerId, 'Selection Changed');
     }
 }
 
@@ -440,35 +450,15 @@ function mouseMoveWhileDown(target, whileMove) {
 
         let selection = window.getSelection().getRangeAt(0);
         if (selection.startOffset === selection.endOffset) {
-            return;
+            console.log('Returning in Mouse Down;')
+            event.stopPropagation();
         }
-        removeContentEditable(containerId);
+
+        console.log('Event in Mouse Up =', event);
     };
 
     target.addEventListener('mousedown', function (event) {
-        console.log('Event =', event);
         window.addEventListener('mousemove', whileMove);
         window.addEventListener('mouseup', endMove);   
     });
-}
-
-
-function onSelect(cell) {
-    console.log('selection started......', window.getSelection().getRangeAt(0));
-    makeContentEditable(containerId)
-}
-
-function onMouseUp(cell) {
-    let selection = window.getSelection().getRangeAt(0);
-    if (selection.startOffset === selection.endOffset) return;
-    removeContentEditable(containerId);
-}
-
-function onSelection(cell) {
-    console.log('selection changed.');
-    removeContentEditable(containerId);
-}
-
-function onInputChange() {
-    console.log('Input selection changed...')
 }
