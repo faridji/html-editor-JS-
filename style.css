@@ -65,6 +65,39 @@ table
     border-collapse: collapse;
 }
 
+.box {
+    background-color: #999; 
+    width: 10%; 
+    margin-bottom: 10px; 
+    text-transform: uppercase;
+
+    resize: both;
+    overflow: auto;
+    width: 120px;
+    height: 120px;
+    margin: 0px;
+    padding: 0px;
+    border: 1px solid black;
+    display:block;
+}
+
+table th {
+    position: relative;
+}
+
+.resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    cursor: col-resize;
+    user-select: none;
+}
+
+.resizer:hover, .resizing {
+    border-right: 2px solid blue;
+}
+
 input[type="text"] {
     width: 100%; 
     box-sizing: border-box;

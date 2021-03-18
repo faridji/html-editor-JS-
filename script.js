@@ -46,6 +46,7 @@ function listenToDOMEvents() {
             [numOfRows, numOfCols] = dimensions.split('/');
             addHTMLAtCaretPos('table');
             removeContentEditable(containerId);
+            initResizing();
         }
     });
 
@@ -146,7 +147,7 @@ function getTableHTML() {
     for (let c=0; c<numOfCols; c++) {
         let th = document.createElement('th');
         th.setAttribute('contenteditable', 'true');
-        th.style.width = colWidth + '%';
+        // th.style.width = colWidth + '%';
         th.innerHTML = `Heading ${c+1}`;
 
         th.addEventListener('click', () => {
@@ -156,8 +157,6 @@ function getTableHTML() {
         th.addEventListener('focus', () => {
             onCellFocus(th);
         });
-
-        mouseMoveWhileDown(th, onSelectionChange);
 
         theadRow.appendChild(th);
     }
@@ -172,7 +171,7 @@ function getTableHTML() {
 
         for (let c=0; c<numOfCols; c++) {
             let td = document.createElement('td');
-            td.style.width = colWidth + '%';
+            // td.style.width = colWidth + '%';
             td.setAttribute('contenteditable', 'true');
             td.innerHTML = `Cell ${c+1}`;
 
@@ -183,8 +182,6 @@ function getTableHTML() {
             td.addEventListener('focus', () => {
                 onCellFocus(td);
             });
-
-            mouseMoveWhileDown(td, onSelectionChange);
 
             tr.appendChild(td);
         }
@@ -198,55 +195,67 @@ function getTableHTML() {
     return table;
 }
 
-function getTableHTML2() {
-    const colWidth = (100/numOfCols).toFixed(2);
+function initResizing() {
+    const table = document.getElementById(tblId);
 
-    let table = '<table id="dynamic_table">'
-    let thead = '<thead>';
-    let tbody = '<tbody>';
+    // Query all headers
+    const cols = table.querySelectorAll('th');
 
-    let theadRow = '<tr onclick="getRowIndex(this)">';
+    // Loop over them
+    [].forEach.call(cols, function(col) {
+        // Create a resizer element
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
 
-    for (let c=0; c<numOfCols; c++) {
-        theadRow += `<th  onclick="getCellIndex(this)" onfocus="onCellFocus(this)" contenteditable style="width: ${colWidth}%;">Heading ${c+1}</th>`;
-    }
+        // Set the height
+        resizer.style.height = `${table.offsetHeight}px`;
 
-    theadRow += '</tr>';
-    thead += theadRow;
+        // Add a resizer element to the column
+        col.appendChild(resizer);
 
-    for (let r=1; r<numOfRows; r++) {
-        let tr = '<tr onclick="getRowIndex(this)">';
-
-        for (let c=0; c<numOfCols; c++) {
-
-            // tr += `<td style="width: ${colWidth}%;" contenteditable
-            //         onclick="getCellIndex(this)" 
-            //         onfocus="onCellFocus(this)">Cell ${c+1}
-            //     </td>`;
-
-
-            tr += `<td style="width: ${colWidth}%;" contenteditable
-                    onclick="getCellIndex(this)" 
-                    onfocus="onCellFocus(this)"
-                    onselectstart="onSelect(this)"
-                    onselectionchange="onSelection(this)"
-                    onmouseup="onMouseUp(this)">Cell ${c+1}
-                </td>`;
-
-
-            // tr += `<td style="width: ${colWidth}%;"
-            //         onclick="getCellIndex(this)">
-            //         <input type="text" onselect="onInputChange()" value="Cell ${c+1}"/>
-            //     </td>`;
-        }
-
-        tr += '</tr>';
-        tbody += tr;
-    }
-
-    table += thead + tbody + '</table>';
-    return table;
+        // Will be implemented in the next section
+        createResizableColumn(col, resizer);
+    });
 }
+
+const createResizableColumn = function(col, resizer) {
+    // Track the current position of mouse
+    let x = 0;
+    let w = 0;
+
+    const mouseDownHandler = function(e) {
+        // Get the current mouse position
+        x = e.clientX;
+
+        // Calculate the current width of column
+        const styles = window.getComputedStyle(col);
+        w = parseInt(styles.width, 10);
+
+        resizer.classList.add('resizing');
+
+        // Attach listeners for document's events
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+    };
+
+    const mouseMoveHandler = function(e) {
+        // Determine how far the mouse has been moved
+        const dx = e.clientX - x;
+
+        // Update the width of column
+        col.style.width = `${w + dx}px`;
+
+        resizer.classList.remove('resizing');
+    };
+
+    // When user releases the mouse, remove the existing event listeners
+    const mouseUpHandler = function() {
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+    };
+
+    resizer.addEventListener('mousedown', mouseDownHandler);
+};
 
 function addRow(pos) {
     const table = document.getElementById(tblId);
@@ -420,7 +429,6 @@ function addHTMLAtCaretPos(type) {
 }
 
 function getRowIndex(row) {
-    console.log('row clicked.')
     rowIndex = row.rowIndex;
     removeContentEditable(containerId, 'Row Clicked');
     event.stopPropagation();
@@ -431,9 +439,9 @@ function getCellIndex(col) {
 }
 
 function onCellFocus(cell) {
-    setTimeout(() => {
-        document.execCommand('selectAll', false, null);
-    }, 10);
+    // setTimeout(() => {
+    //     document.execCommand('selectAll', false, null);
+    // }, 10);
 }
 
 function onSelectionChange() {
@@ -450,11 +458,8 @@ function mouseMoveWhileDown(target, whileMove) {
 
         let selection = window.getSelection().getRangeAt(0);
         if (selection.startOffset === selection.endOffset) {
-            console.log('Returning in Mouse Down;')
             event.stopPropagation();
         }
-
-        console.log('Event in Mouse Up =', event);
     };
 
     target.addEventListener('mousedown', function (event) {
