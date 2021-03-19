@@ -31,9 +31,11 @@ function listenToDOMEvents() {
     });
 
     document.getElementById('btn_preview').addEventListener('click', () => {
+        document.querySelectorAll('.resizer').forEach(e => e.remove());
         const content = document.getElementById('editable_content').innerHTML;
         document.getElementById('content').innerHTML = content;
         document.getElementById('html_view').innerText = content;
+        initResizing();
     });
 
     document.getElementById(containerId).addEventListener('click', (ev) => {
@@ -46,16 +48,19 @@ function listenToDOMEvents() {
             [numOfRows, numOfCols] = dimensions.split('/');
             addHTMLAtCaretPos('table');
             removeContentEditable(containerId);
+            // newResizer();
             initResizing();
         }
     });
 
     document.getElementById('row_above').addEventListener('click', () => {
         addRow('above');
+        reInitializeResizing();
     });
 
     document.getElementById('row_below').addEventListener('click', () => {
         addRow('below');
+        reInitializeResizing();
     });
 
     document.getElementById('column_left').addEventListener('click', () => {
@@ -131,7 +136,13 @@ function removeContentEditable(el, from) {
 }
 
 function getTableHTML() {
-    const colWidth = (100/numOfCols).toFixed(2);
+    // const colWidth = (100/numOfCols).toFixed(2);
+    const containerPadding = 20;
+    const container = document.getElementById(containerId);
+    const styles = window.getComputedStyle(container);
+    const containerWidth = parseInt(styles.width, 10) - containerPadding;
+    let width = (containerWidth / numOfCols).toFixed(2);
+    width = 70;
 
     let table = document.createElement('table');
     table.setAttribute('id', 'dynamic_table');
@@ -147,8 +158,8 @@ function getTableHTML() {
     for (let c=0; c<numOfCols; c++) {
         let th = document.createElement('th');
         th.setAttribute('contenteditable', 'true');
-        // th.style.width = colWidth + '%';
         th.innerHTML = `Heading ${c+1}`;
+        th.style.width = width + 'px';
 
         th.addEventListener('click', () => {
             getCellIndex(th);
@@ -171,9 +182,9 @@ function getTableHTML() {
 
         for (let c=0; c<numOfCols; c++) {
             let td = document.createElement('td');
-            // td.style.width = colWidth + '%';
             td.setAttribute('contenteditable', 'true');
             td.innerHTML = `Cell ${c+1}`;
+            td.style.width = width + 'px';
 
             td.addEventListener('click', () => {
                 getCellIndex(td);
@@ -195,6 +206,11 @@ function getTableHTML() {
     return table;
 }
 
+function reInitializeResizing() {
+    document.querySelectorAll('.resizer').forEach(e => e.remove());
+    this.initResizing();
+}
+
 function initResizing() {
     const table = document.getElementById(tblId);
 
@@ -203,19 +219,23 @@ function initResizing() {
 
     // Loop over them
     [].forEach.call(cols, function(col) {
-        // Create a resizer element
-        const resizer = document.createElement('div');
-        resizer.classList.add('resizer');
-
-        // Set the height
-        resizer.style.height = `${table.offsetHeight}px`;
-
-        // Add a resizer element to the column
-        col.appendChild(resizer);
-
-        // Will be implemented in the next section
-        createResizableColumn(col, resizer);
+        addResizerDiv(col, table);
     });
+}
+
+function addResizerDiv(c, tbl) {
+    // Create a resizer element
+    const resizer = document.createElement('div');
+    resizer.classList.add('resizer');
+
+    // Set the height
+    resizer.style.height = `${tbl.offsetHeight}px`;
+
+    // Add a resizer element to the column
+    c.appendChild(resizer);
+
+    // Will be implemented in the next section
+    createResizableColumn(c, resizer);
 }
 
 const createResizableColumn = function(col, resizer) {
@@ -230,7 +250,6 @@ const createResizableColumn = function(col, resizer) {
         // Calculate the current width of column
         const styles = window.getComputedStyle(col);
         w = parseInt(styles.width, 10);
-
         resizer.classList.add('resizing');
 
         // Attach listeners for document's events
@@ -272,6 +291,7 @@ function addRow(pos) {
         for (let i=0; i<colsToAdd; i++) {
             let cell = row.insertCell(i);
             cell.innerHTML = `Cell ${i+1}`;
+            cell.style.width = '70px';
             cell.onclick = () => {
                 colIndex = cell.cellIndex;
                 console.log('Cell Index =', colIndex);
@@ -296,34 +316,51 @@ function addColumn(pos) {
         var tblHeadObj = table.tHead;
 
         for (var h=0; h<tblHeadObj.rows.length; h++) {
-            document.createElement('th').set;
-            tblHeadObj.rows[h].insertCell(colIndex);
+            tblHeadObj.rows[h].insertCell(colIndex).outerHTML = "<th>Heading</th>";
+            th = tblHeadObj.rows[h].cells[colIndex];
+            th.setAttribute('contenteditable', true);
+            th.style.width = '70px';
+            th.onclick = () => {
+                getCellIndex(th);
+            }
+
+            th.onfocus = () => {
+                onCellFocus(th);
+            };
+
+            addResizerDiv(th, table);
         }
     
         var tblBodyObj = document.getElementById(tblId).tBodies[0];
         for (var i=0; i<tblBodyObj.rows.length; i++) {
-           const cell = tblBodyObj.rows[i].insertCell(colIndex);
-           addInputToCell(cell);
-           cell.onclick = () => {
-            colIndex = cell.cellIndex;
-           }
+            const cell = tblBodyObj.rows[i].insertCell(colIndex);
+            cell.setAttribute('contenteditable', true);
+            cell.style.width = '70px';
+            
+            cell.onclick = () => {
+                getCellIndex(cell);
+            }
+
+            cell.onfocus = () => {
+                onCellFocus(cell);
+            };
         }
     
-        numOfCols = parseInt(numOfCols) + 1;
-        const colWidth = (100 / numOfCols).toFixed(2);
+        // numOfCols = parseInt(numOfCols) + 1;
+        // // const colWidth = (100 / numOfCols).toFixed(2);
     
-        const rowInds = Object.keys(table.rows);
+        // const rowInds = Object.keys(table.rows);
     
-        setTimeout(() => {
-            for (const rIdx of rowInds) {
-                const row = table.rows[+rIdx];
-                const cellIdx = Object.keys(row.cells);
-                for (const cIdx of cellIdx) {
-                    const col = row.cells[+cIdx];
-                    col.style.width = colWidth + '%';
-                }
-            }
-        }, 0);
+        // setTimeout(() => {
+        //     for (const rIdx of rowInds) {
+        //         const row = table.rows[+rIdx];
+        //         const cellIdx = Object.keys(row.cells);
+        //         for (const cIdx of cellIdx) {
+        //             const col = row.cells[+cIdx];
+        //             col.style.width = 'fit-content';
+        //         }
+        //     }
+        // }, 0);
     }
 }
 
@@ -436,6 +473,7 @@ function getRowIndex(row) {
 
 function getCellIndex(col) {
     colIndex = col.cellIndex;
+    console.log('Col Index =', colIndex);
 }
 
 function onCellFocus(cell) {
@@ -465,5 +503,41 @@ function mouseMoveWhileDown(target, whileMove) {
     target.addEventListener('mousedown', function (event) {
         window.addEventListener('mousemove', whileMove);
         window.addEventListener('mouseup', endMove);   
+    });
+}
+
+function newResizer() {
+    var thElm;
+    var startOffset;
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll("table th, td"),
+      function (th) {
+        th.style.position = 'relative';
+
+        var grip = document.createElement('div');
+        grip.innerHTML = "&nbsp;";
+        grip.style.top = 0;
+        grip.style.right = 0;
+        grip.style.bottom = 0;
+        grip.style.width = '5px';
+        grip.style.position = 'absolute';
+        grip.style.cursor = 'col-resize';
+        grip.addEventListener('mousedown', function (e) {
+            thElm = th;
+            startOffset = th.offsetWidth - e.pageX;
+        });
+
+        th.appendChild(grip);
+      });
+
+    document.addEventListener('mousemove', function (e) {
+      if (thElm) {
+        thElm.style.width = startOffset + e.pageX + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', function () {
+        thElm = undefined;
     });
 }

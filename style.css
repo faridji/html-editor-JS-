@@ -59,12 +59,6 @@
     margin-bottom: 5px;
 }
 
-table 
-{
-    width: 100%;
-    border-collapse: collapse;
-}
-
 .box {
     background-color: #999; 
     width: 10%; 
@@ -79,10 +73,6 @@ table
     padding: 0px;
     border: 1px solid black;
     display:block;
-}
-
-table th {
-    position: relative;
 }
 
 .resizer {
@@ -102,6 +92,16 @@ input[type="text"] {
     width: 100%; 
     box-sizing: border-box;
     border: none;
+}
+
+table 
+{
+    border-collapse: collapse;
+} 
+
+table th {
+    position: relative;
+    word-wrap: break-word; 
 }
 
 table, td, th {
