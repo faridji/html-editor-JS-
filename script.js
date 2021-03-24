@@ -82,6 +82,10 @@ function listenToDOMEvents()
         addColumn('right');
     });
 
+    document.getElementById('remove_table').addEventListener('click', () => {
+        onRemove('table');
+    });
+
     document.getElementById('remove_row').addEventListener('click', () => {
         onRemove('row');
     });
@@ -423,17 +427,25 @@ function addInputToCell(cell) {
 
 function onRemove(type) {
     const table = document.getElementById(getTableId());
-    if (table) {
-        if (type == 'row') {
-            table.deleteRow(rowIndex);
-        }
-        else {
-            var allRows = table.rows;
-            for (var i=0; i<allRows.length; i++) {
-                if (allRows[i].cells.length > 1) {
-                    allRows[i].deleteCell(colIndex);
+    if (table) 
+    {
+        switch (type) {
+            case 'row':
+                table.deleteRow(rowIndex);
+                break;
+
+            case 'table':
+                const parentElement = table.parentElement;
+                parentElement.removeChild(table);
+                break;
+
+            default:
+                var allRows = table.rows;
+                for (var i=0; i<allRows.length; i++) {
+                    if (allRows[i].cells.length > 1) {
+                        allRows[i].deleteCell(colIndex);
+                    }
                 }
-            }
         }
     }
 }
