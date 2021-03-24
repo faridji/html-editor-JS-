@@ -2,8 +2,10 @@ var rowIndex = 0;
 var colIndex = 0;
 var numOfCols = 0;
 var numOfRows = 0;
-var tblId = 'dynamic_table';
+var numOfTables = 0;
 var containerId = 'editable_content';
+currentElement = null;
+
 listenToDOMEvents();
 
 function makeTable() {
@@ -11,7 +13,11 @@ function makeTable() {
     addHTMLAtCaretPos('table');
 }
 
-function listenToDOMEvents() {
+function listenToDOMEvents() 
+{
+    currentElement = null;
+    hideTableActions();
+    
     document.getElementById(containerId).addEventListener('paste', (e) => {
         setTimeout(() => {
             const targetHTML = document.getElementById('editable_content').innerHTML;
@@ -39,17 +45,22 @@ function listenToDOMEvents() {
     });
 
     document.getElementById(containerId).addEventListener('click', (ev) => {
+        this.currentElement = null;
+        hideTableActions();
         makeContentEditable(containerId, 'Main Container Clicked.');
     });
 
     document.getElementById('table').addEventListener('click', () => {
         const dimensions = prompt('rows/cols', '2/3');
-        if (dimensions && dimensions != '') {
+        if (dimensions && dimensions != '') 
+        {
+            if (this.currentElement === 'table') return;
+
             [numOfRows, numOfCols] = dimensions.split('/');
             addHTMLAtCaretPos('table');
             removeContentEditable(containerId);
             // newResizer();
-            initResizing();
+            initResizing(`dynamic_table_${numOfTables}`);
         }
     });
 
@@ -127,6 +138,33 @@ function listenToDOMEvents() {
     });
 }
 
+function getTableId() {
+    let selection = window.getSelection().getRangeAt(0);
+    let startingElement = selection.startContainer;
+
+    while(startingElement.tagName != 'TABLE') {
+        startingElement = startingElement.parentElement;
+    }
+
+    return startingElement.getAttribute('id');
+}
+
+function onMainContainerClick() {
+    this.currentElement = null;
+    hideTableActions();
+}
+
+function hideTableActions() {
+    let tableActions = document.getElementsByClassName('table-actions')[0];
+
+    if (this.currentElement == null) {
+        tableActions.style.display = 'none';
+    }
+    else {
+        tableActions.style.display = 'flex';
+    }
+}
+
 function makeContentEditable(el, from) {
     document.getElementById(el).setAttribute('contenteditable', 'true');
 }
@@ -136,16 +174,18 @@ function removeContentEditable(el, from) {
 }
 
 function getTableHTML() {
+    numOfTables += 1;
     // const colWidth = (100/numOfCols).toFixed(2);
     const containerPadding = 20;
     const container = document.getElementById(containerId);
     const styles = window.getComputedStyle(container);
     const containerWidth = parseInt(styles.width, 10) - containerPadding;
     let width = (containerWidth / numOfCols).toFixed(2);
-    width = 70;
+    console.log("width", width, numOfCols)
+    //  width = 100;
 
     let table = document.createElement('table');
-    table.setAttribute('id', 'dynamic_table');
+    table.setAttribute('id', `dynamic_table_${numOfTables}`);
     
     let thead = document.createElement('thead');
     let tbody = document.createElement('tbody');
@@ -184,7 +224,7 @@ function getTableHTML() {
             let td = document.createElement('td');
             td.setAttribute('contenteditable', 'true');
             td.innerHTML = `Cell ${c+1}`;
-            td.style.width = width + 'px';
+            //td.style.width = width + 'px';
 
             td.addEventListener('click', () => {
                 getCellIndex(td);
@@ -207,12 +247,14 @@ function getTableHTML() {
 }
 
 function reInitializeResizing() {
-    document.querySelectorAll('.resizer').forEach(e => e.remove());
-    this.initResizing();
+    const id = getTableId();
+    const table = document.getElementById(id);
+    table.querySelectorAll('.resizer').forEach(e => e.remove());
+    this.initResizing(id);
 }
 
-function initResizing() {
-    const table = document.getElementById(tblId);
+function initResizing(id) {
+    const table = document.getElementById(id);
 
     // Query all headers
     const cols = table.querySelectorAll('th');
@@ -277,7 +319,7 @@ const createResizableColumn = function(col, resizer) {
 };
 
 function addRow(pos) {
-    const table = document.getElementById(tblId);
+    const table = document.getElementById(getTableId());
     let colsToAdd = 0;
         
     if (table) {
@@ -290,6 +332,7 @@ function addRow(pos) {
 
         for (let i=0; i<colsToAdd; i++) {
             let cell = row.insertCell(i);
+            cell.setAttribute('contenteditable', true);
             cell.innerHTML = `Cell ${i+1}`;
             cell.style.width = '70px';
             cell.onclick = () => {
@@ -299,9 +342,11 @@ function addRow(pos) {
         }
 
         row.onclick = () => {
-            rowIndex = row.rowIndex;
+            getRowIndex(row);
             console.log('Row Index =', rowIndex);
         };
+
+        reInitializeResizing();
     }
 }
 
@@ -310,7 +355,7 @@ function addColumn(pos) {
 
     if (colIndex < 0) colIndex = 0;
 
-    const table = document.getElementById('dynamic_table');
+    const table = document.getElementById(getTableId());
 
     if (table) {
         var tblHeadObj = table.tHead;
@@ -320,6 +365,7 @@ function addColumn(pos) {
             th = tblHeadObj.rows[h].cells[colIndex];
             th.setAttribute('contenteditable', true);
             th.style.width = '70px';
+
             th.onclick = () => {
                 getCellIndex(th);
             }
@@ -331,12 +377,13 @@ function addColumn(pos) {
             addResizerDiv(th, table);
         }
     
-        var tblBodyObj = document.getElementById(tblId).tBodies[0];
+        var tblBodyObj = table.tBodies[0];
         for (var i=0; i<tblBodyObj.rows.length; i++) {
             const cell = tblBodyObj.rows[i].insertCell(colIndex);
+            cell.innerHTML = `Cell ${i+1}`;
             cell.setAttribute('contenteditable', true);
             cell.style.width = '70px';
-            
+
             cell.onclick = () => {
                 getCellIndex(cell);
             }
@@ -346,6 +393,10 @@ function addColumn(pos) {
             };
         }
     
+        reInitializeResizing();
+
+        // This give equal width to all table columns;
+        
         // numOfCols = parseInt(numOfCols) + 1;
         // // const colWidth = (100 / numOfCols).toFixed(2);
     
@@ -371,13 +422,13 @@ function addInputToCell(cell) {
 }
 
 function onRemove(type) {
-    const table = document.getElementById(tblId);
+    const table = document.getElementById(getTableId());
     if (table) {
         if (type == 'row') {
             table.deleteRow(rowIndex);
         }
         else {
-            var allRows = document.getElementById(tblId).rows;
+            var allRows = table.rows;
             for (var i=0; i<allRows.length; i++) {
                 if (allRows[i].cells.length > 1) {
                     allRows[i].deleteCell(colIndex);
@@ -466,13 +517,22 @@ function addHTMLAtCaretPos(type) {
 }
 
 function getRowIndex(row) {
+    this.currentElement = 'table';
     rowIndex = row.rowIndex;
     removeContentEditable(containerId, 'Row Clicked');
     event.stopPropagation();
+    hideTableActions();
 }
 
 function getCellIndex(col) {
     colIndex = col.cellIndex;
+    this.currentElement = 'table';
+
+    if (this.currentElement == 'table') {
+        let tableActions = document.getElementsByClassName('table-actions')[0];
+        tableActions.style.display = 'flex';
+    }
+    
     console.log('Col Index =', colIndex);
 }
 

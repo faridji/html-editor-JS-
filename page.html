@@ -6,7 +6,7 @@
         <title>HTML Content Editable</title>
         <link rel="stylesheet" href="./style.css">
     </head>
-    <body>
+    <body onclick="onMainContainerClick()">
 
         <!-- <div class="box">Resizable Box</div> -->
 
@@ -16,33 +16,35 @@
                     <button id="table" class="action-item">table</button>
                 </li>
 
-                <li>
-                    <button id="row_below" class="action-item">row below</button>
-                </li>
-
-                <li>
-                    <button id="row_above" class="action-item">row above</button>
-                </li>
-
-                <li>
-                    <button id="column_left" class="action-item">column left</button>
-                </li>
-
-                <li>
-                    <button id="column_right" class="action-item">column right</button>
-                </li>
-
-                <li>
-                    <button id="remove_row" class="action-item">remove row</button>
-                </li>
-
-                <li>
-                    <button id="remove_column" class="action-item">remove column</button>
-                </li>
-
-                <li>
-                    <button id="merge_cells" class="action-item">merge cells</button>
-                </li>
+                <ul class="table-actions">
+                    <li>
+                        <button id="row_below" class="action-item">row below</button>
+                    </li>
+    
+                    <li>
+                        <button id="row_above" class="action-item">row above</button>
+                    </li>
+    
+                    <li>
+                        <button id="column_left" class="action-item">column left</button>
+                    </li>
+    
+                    <li>
+                        <button id="column_right" class="action-item">column right</button>
+                    </li>
+    
+                    <li>
+                        <button id="remove_row" class="action-item">remove row</button>
+                    </li>
+    
+                    <li>
+                        <button id="remove_column" class="action-item">remove column</button>
+                    </li>
+    
+                    <li>
+                        <button id="merge_cells" class="action-item">merge cells</button>
+                    </li>
+                </ul>
 
                 <li style="margin-left: 20px;">
                     <button id="list" class="action-item">list</button>
